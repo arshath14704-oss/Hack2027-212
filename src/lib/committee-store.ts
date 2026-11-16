@@ -21,7 +21,7 @@ export async function readLocalCommittee(): Promise<CommitteeMember[]> {
   try {
     if (fs.existsSync(dataFilePath)) {
       const raw = fs.readFileSync(dataFilePath, 'utf-8')
-      return JSON.parse(raw) as CommitteeMember[]
+      return JSON.parse(raw.replace(/^\uFEFF/, '')) as CommitteeMember[]
     }
   } catch (err) {
     console.error('Error reading local committee data:', err)
