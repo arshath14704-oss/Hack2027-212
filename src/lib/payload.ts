@@ -10,6 +10,12 @@ type CollectionSlug = keyof Config['collections']
  */
 export async function getPayloadClient() {
   try {
+    // If no DATABASE_URL is defined, skip initializing Payload to avoid connection attempts during build
+    if (!process.env.DATABASE_URL) return null
+    // During Next.js build phase, NEXT_BUILD_ID is set – skip DB to avoid timeouts
+    // Skip DB during Next.js production build (static generation)
+    if (process.env.NEXT_PHASE && process.env.NEXT_PHASE.includes('production-build')) return null
+    if (process.env.NEXT_BUILD_ID) return null
     const payloadConfig = await config
     return await getPayload({ config: payloadConfig })
   } catch {
