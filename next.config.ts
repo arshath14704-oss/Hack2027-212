@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(dirname),
   },
-  output: 'standalone',
+  output: process.env.VERCEL ? undefined : 'standalone',
   images: {
     loader: 'custom',
     loaderFile: './figma-image-loader.ts',
@@ -60,7 +60,13 @@ const nextConfig: NextConfig = {
     },
   },
   env: {
-    NEXT_PUBLIC_SITE_URL: process.env.FIGMA_PUBLIC_URL || process.env.RAILWAY_STATIC_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_SITE_URL:
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : process.env.FIGMA_PUBLIC_URL || 'http://localhost:3000'),
   },
 }
 

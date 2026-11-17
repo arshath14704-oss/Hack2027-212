@@ -2,6 +2,7 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { en as adminLanguage } from '@payloadcms/translations/languages/en'
 import { fileURLToPath } from 'url'
 import { Admins } from './collections/Admins'
@@ -19,6 +20,9 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
+      max: process.env.NODE_ENV === 'production' ? 10 : 5,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
     },
   }),
   admin: {
@@ -48,5 +52,17 @@ export default buildConfig({
     fallback: true,
     defaultLocale: 'en',
   },
-  plugins: [mcpPlugin({})],
+  plugins: [
+    mcpPlugin({}),
+    ...(process.env.BLOB_READ_WRITE_TOKEN
+      ? [
+          vercelBlobStorage({
+            collections: {
+              media: true,
+            },
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+          }),
+        ]
+      : []),
+  ],
 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import { put } from '@vercel/blob'
 import { readLocalCommittee, writeLocalCommittee } from '@/lib/committee-store'
 import { isRequestAdminAuthenticated } from '@/lib/admin-auth'
 
@@ -59,17 +60,34 @@ export async function POST(req: NextRequest) {
     const cleanBase = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]/g, '_')
     const fileName = `${cleanBase}_${Date.now()}${ext}`
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'committee')
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true })
+    let publicUrl: string
+
+    // 1. Persistent external storage on Vercel via Vercel Blob
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(`committee/${fileName}`, file, {
+        access: 'public',
+      })
+      publicUrl = blob.url
+    } else {
+      // 2. Local development fallback to public/uploads/committee/
+      try {
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'committee')
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true })
+        }
+        const filePath = path.join(uploadDir, fileName)
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+        fs.writeFileSync(filePath, buffer)
+        publicUrl = `/uploads/committee/${fileName}`
+      } catch (fsErr: any) {
+        // In read-only serverless environment where Vercel Blob token is not yet configured,
+        // encode as base64 Data URL so the photo is preserved without crashing
+        const arrayBuffer = await file.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+        publicUrl = `data:${file.type};base64,${base64}`
+      }
     }
-
-    const filePath = path.join(uploadDir, fileName)
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    fs.writeFileSync(filePath, buffer)
-
-    const publicUrl = `/uploads/committee/${fileName}`
 
     // If memberId is passed, update that member's photoUrl right away
     if (memberId) {

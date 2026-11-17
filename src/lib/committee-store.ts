@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { getPayloadClient } from '@/lib/payload'
+import defaultCommitteeData from '@/data/committee.json'
 
 export type CommitteeMember = {
   id: string
@@ -21,12 +22,15 @@ export async function readLocalCommittee(): Promise<CommitteeMember[]> {
   try {
     if (fs.existsSync(dataFilePath)) {
       const raw = fs.readFileSync(dataFilePath, 'utf-8')
-      return JSON.parse(raw.replace(/^\uFEFF/, '')) as CommitteeMember[]
+      const parsed = JSON.parse(raw.replace(/^\uFEFF/, ''))
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed as CommitteeMember[]
+      }
     }
-  } catch (err) {
-    console.error('Error reading local committee data:', err)
+  } catch {
+    // In serverless / read-only filesystem, file read falls back to bundled JSON
   }
-  return []
+  return (defaultCommitteeData as CommitteeMember[]) || []
 }
 
 export async function writeLocalCommittee(members: CommitteeMember[]): Promise<boolean> {

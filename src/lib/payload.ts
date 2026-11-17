@@ -51,6 +51,7 @@ export async function findBySlug<T extends CollectionSlug>(
   },
 ): Promise<Config['collections'][T] | null> {
   const payload = await getPayloadClient()
+  if (!payload) return null
   const { draft = false, depth = 2 } = options ?? {}
 
   const result = await payload.find({
@@ -99,6 +100,7 @@ export async function findByField<T extends CollectionSlug>(
   },
 ): Promise<Config['collections'][T] | null> {
   const payload = await getPayloadClient()
+  if (!payload) return null
   const { draft = false, depth = 2 } = options ?? {}
 
   const result = await payload.find({
