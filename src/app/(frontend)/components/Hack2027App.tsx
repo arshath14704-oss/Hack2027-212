@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import hackLogo from '../assets/hack-2027-logo.png'
 import simatsLogo from '../assets/simats-engineering-logo.png'
 import type { CommitteeMemberData } from '../page'
-import { UploadPhotoModal } from './UploadPhotoModal'
 import { ScrollProgress } from './ScrollProgress'
 import { CustomCursor } from './CustomCursor'
 import { BinaryBackground } from './BinaryBackground'
@@ -504,8 +503,6 @@ export function Hack2027App({
   const [active, setActive] = useState('home')
   const [loaded, setLoaded] = useState(false)
   const [showTop, setShowTop] = useState(false)
-  const [uploadModalOpen, setUploadModalOpen] = useState(false)
-  const [activeEditMember, setActiveEditMember] = useState<CommitteeMemberData | null>(null)
   const [liveMembers, setLiveMembers] = useState<CommitteeMemberData[]>(cmsMembers || [])
 
   useEffect(() => {
@@ -614,23 +611,6 @@ export function Hack2027App({
     return { regular, faculty }
   }, [liveMembers])
 
-  const handlePhotoUpdated = (updatedMember: CommitteeMemberData) => {
-    setLiveMembers((prev) => {
-      const idx = prev.findIndex((m) => m.id === updatedMember.id)
-      if (idx >= 0) {
-        const copy = [...prev]
-        copy[idx] = updatedMember
-        return copy
-      }
-      return [...prev, updatedMember]
-    })
-  }
-
-  const openUploadForMember = (member: CommitteeMemberData) => {
-    setActiveEditMember(member)
-    setUploadModalOpen(true)
-  }
-
   return (
     <div className="site-shell">
       <ScrollProgress />
@@ -657,6 +637,13 @@ export function Hack2027App({
               {label}
             </a>
           ))}
+          <a
+            href="#registration"
+            className="mobile-menu-register"
+            onClick={() => setMenuOpen(false)}
+          >
+            Register Now <span className="cta-arrow">↗</span>
+          </a>
         </nav>
         <div className="nav-cta-wrap">
           <a href="#registration" className="button button-nav">
@@ -1050,64 +1037,22 @@ export function Hack2027App({
               title="MEET THE ORGANIZING COMMITTEE"
               copy="The team behind HACK 2027."
             />
-            <div className="team-actions">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveEditMember(null)
-                  setUploadModalOpen(true)
-                }}
-                className="button button-small"
-              >
-                <Icon name="plus" size={16} /> Upload Profile Photo
-              </button>
-              <a
-                href="/admin/committee"
-                className="button button-small button-ghost"
-                title="Manage all committee member profiles and settings"
-              >
-                Admin Dashboard ↗
-              </a>
-            </div>
           </div>
           <div className="committee-grid">
             {displayCommittee.regular.map((member, index) => (
               <article className="profile-card reveal" key={member.id}>
                 <span className="profile-index">{String(index + 1).padStart(2, '0')}</span>
                 {member.photoUrl ? (
-                  <div
-                    className="profile-avatar has-photo is-clickable"
-                    onClick={() => openUploadForMember(member)}
-                    title="Click to replace or edit profile photograph"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') openUploadForMember(member)
-                    }}
-                  >
+                  <div className="profile-avatar has-photo">
                     <img
                       src={member.photoUrl}
                       alt={`Profile photo of ${member.name}`}
                       loading="lazy"
                     />
-                    <div className="avatar-edit-overlay">
-                      <span>Change Photo</span>
-                    </div>
                   </div>
                 ) : (
-                  <div
-                    className="profile-avatar is-clickable"
-                    onClick={() => openUploadForMember(member)}
-                    title="Click to upload profile photograph"
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Upload profile image for ${member.name}`}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') openUploadForMember(member)
-                    }}
-                  >
+                  <div className="profile-avatar">
                     <Icon name="users" size={33} />
-                    <small>UPLOAD PHOTO</small>
                   </div>
                 )}
                 <h3>{member.name}</h3>
@@ -1156,32 +1101,15 @@ export function Hack2027App({
           {displayCommittee.faculty.length > 0 ? (
             displayCommittee.faculty.map((fac) => (
               <div className="faculty-block reveal" key={fac.id}>
-                <div
-                  className={`faculty-avatar ${fac.photoUrl ? 'has-photo' : ''} is-clickable`}
-                  onClick={() => openUploadForMember(fac)}
-                  title="Click to change profile photograph"
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') openUploadForMember(fac)
-                  }}
-                >
+                <div className={`faculty-avatar ${fac.photoUrl ? 'has-photo' : ''}`}>
                   {fac.photoUrl ? (
-                    <>
-                      <img
-                        src={fac.photoUrl}
-                        alt={`Profile photo of ${fac.name}`}
-                        loading="lazy"
-                      />
-                      <div className="avatar-edit-overlay">
-                        <span>Change</span>
-                      </div>
-                    </>
+                    <img
+                      src={fac.photoUrl}
+                      alt={`Profile photo of ${fac.name}`}
+                      loading="lazy"
+                    />
                   ) : (
-                    <>
-                      <Icon name="users" size={38} />
-                      <small>UPLOAD PHOTO</small>
-                    </>
+                    <Icon name="users" size={38} />
                   )}
                 </div>
                 <div>
@@ -1193,28 +1121,8 @@ export function Hack2027App({
             ))
           ) : (
             <div className="faculty-block reveal">
-              <div
-                className="faculty-avatar is-clickable"
-                onClick={() =>
-                  openUploadForMember({
-                    id: 'faculty-1',
-                    name: 'DR. JOTHI ARUNACHALAM',
-                    designation: 'Faculty In-Charge',
-                    photoUrl: null,
-                    linkedinUrl: null,
-                    instagramUrl: null,
-                    githubUrl: null,
-                    isFaculty: true,
-                    sortOrder: 99,
-                    isActive: true,
-                  })
-                }
-                role="button"
-                tabIndex={0}
-                aria-label="Editable profile image placeholder for Dr. Jothi Arunachalam"
-              >
+              <div className="faculty-avatar">
                 <Icon name="users" size={38} />
-                <small>UPLOAD PHOTO</small>
               </div>
               <div>
                 <span>FACULTY IN-CHARGE</span>
@@ -1374,17 +1282,6 @@ export function Hack2027App({
           </span>
         </div>
       </footer>
-
-      <UploadPhotoModal
-        isOpen={uploadModalOpen}
-        onClose={() => {
-          setUploadModalOpen(false)
-          setActiveEditMember(null)
-        }}
-        onSuccess={handlePhotoUpdated}
-        initialMember={activeEditMember}
-        allMembers={liveMembers.length > 0 ? liveMembers : displayCommittee.regular}
-      />
 
       <button
         className={`back-top ${showTop ? 'show' : ''}`}
