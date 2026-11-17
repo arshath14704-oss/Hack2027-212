@@ -93,7 +93,7 @@ const committee = [
   },
   {
     name: 'KAREEMULLAH AR',
-    designation: 'Chief Event Coordinator',
+    designation: 'Head Coordinator',
     photo: '/uploads/committee/WhatsApp_Image_2026-11-16_at_8_03_35_PM_1794840105527.jpeg',
     linkedinUrl: null,
     instagramUrl: null,
@@ -109,14 +109,14 @@ const committee = [
   },
   {
     name: 'RESHEKESH B',
-    designation: 'Registration & Participant Coordinator',
+    designation: 'Registration Head',
     photo: '/uploads/committee/WhatsApp_Image_2026-11-16_at_11_51_56_AM_1794841777402.jpeg',
     linkedinUrl: 'https://www.linkedin.com/in/reshekesh-b-b79a84387/',
     instagramUrl: null,
     githubUrl: null,
   },
   {
-    name: 'SUDHARSHSHINI R',
+    name: 'SUDHARSHINI R',
     designation: 'Media & Public Relations Head',
     photo: '/uploads/committee/WhatsApp_Image_2026-11-16_at_8_50_10_PM_1794842437602.jpeg',
     linkedinUrl:
@@ -143,6 +143,14 @@ const committee = [
   {
     name: 'C RAKSHITHA',
     designation: 'Documentation & Certificate Coordinator',
+    photo: null,
+    linkedinUrl: null,
+    instagramUrl: null,
+    githubUrl: null,
+  },
+  {
+    name: 'DHAVAJ JAIN',
+    designation: 'PR Head',
     photo: null,
     linkedinUrl: null,
     instagramUrl: null,
@@ -575,40 +583,51 @@ export function Hack2027App({
 
   // Merge live/CMS committee members with static fallback data.
   const displayCommittee = useMemo(() => {
+    let regular: CommitteeMemberData[] = []
+    let faculty: CommitteeMemberData[] = []
+
     if (liveMembers && liveMembers.length > 0) {
-      const regular = liveMembers.filter((m) => !m.isFaculty)
-      const faculty = liveMembers.filter((m) => m.isFaculty)
-      return { regular, faculty }
-    }
-    // Fallback to static data
-    const regular = committee.map((m, i) => ({
-      id: `member-${i + 1}`,
-      name: m.name,
-      designation: m.designation,
-      photoUrl: m.photo,
-      linkedinUrl: m.linkedinUrl,
-      instagramUrl: m.instagramUrl,
-      githubUrl: m.githubUrl || null,
-      isFaculty: false,
-      sortOrder: i + 1,
-      isActive: true,
-    }))
-    const faculty: CommitteeMemberData[] = [
-      {
-        id: 'faculty-1',
-        name: 'DR. JOTHI ARUNACHALAM',
-        designation: 'Faculty In-Charge',
-        photoUrl:
-          '/uploads/committee/WhatsApp_Image_2026-11-16_at_12_04_01_PM_1794841881836.jpeg',
-        linkedinUrl: null,
-        instagramUrl: null,
-        githubUrl: null,
-        isFaculty: true,
-        sortOrder: 99,
+      regular = liveMembers
+        .filter((m) => !m.isFaculty)
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      faculty = liveMembers
+        .filter((m) => m.isFaculty)
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    } else {
+      regular = committee.map((m, i) => ({
+        id: `member-${i + 1}`,
+        name: m.name,
+        designation: m.designation,
+        photoUrl: m.photo,
+        linkedinUrl: m.linkedinUrl,
+        instagramUrl: m.instagramUrl,
+        githubUrl: m.githubUrl || null,
+        isFaculty: false,
+        sortOrder: i + 1,
         isActive: true,
-      },
-    ]
-    return { regular, faculty }
+      }))
+      faculty = [
+        {
+          id: 'faculty-1',
+          name: 'DR. JOTHI ARUNACHALAM',
+          designation: 'Faculty In-Charge',
+          photoUrl:
+            '/uploads/committee/WhatsApp_Image_2026-11-16_at_12_04_01_PM_1794841881836.jpeg',
+          linkedinUrl: null,
+          instagramUrl: null,
+          githubUrl: null,
+          isFaculty: true,
+          sortOrder: 99,
+          isActive: true,
+        },
+      ]
+    }
+
+    // Top 3 leadership members, remaining supporting crew
+    const leadership = regular.slice(0, 3)
+    const crew = regular.slice(3)
+
+    return { regular, leadership, crew, faculty }
   }, [liveMembers])
 
   return (
@@ -1031,41 +1050,53 @@ export function Hack2027App({
         </section>
 
         <section id="team" className="section team-section">
-          <div className="team-header-row reveal">
-            <SectionHeader
-              eyebrow="People behind the event"
-              title="MEET THE ORGANIZING COMMITTEE"
-              copy="The team behind HACK 2027."
-            />
+          {/* 1. SECTION HEADER */}
+          <div className="team-header-container reveal">
+            <span className="eyebrow team-eyebrow">
+              <i />
+              ORGANIZING COMMITTEE
+            </span>
+            <h2 className="team-main-heading">THE TEAM</h2>
+            <p className="team-subtitle">The brilliant minds behind HACK 2027</p>
           </div>
-          <div className="committee-grid">
-            {displayCommittee.regular.map((member, index) => (
-              <article className="profile-card reveal" key={member.id}>
-                <span className="profile-index">{String(index + 1).padStart(2, '0')}</span>
-                {member.photoUrl ? (
-                  <div className="profile-avatar has-photo">
+
+          {/* 2. LEADERSHIP CARDS (Row of 3 Large Cards) */}
+          <div className="leadership-row reveal">
+            {displayCommittee.leadership.map((member, index) => (
+              <article
+                className={`team-card leadership-card ${index === 0 ? 'chief-card' : ''}`}
+                key={member.id}
+              >
+                {index === 0 && (
+                  <div className="chief-badge">
+                    <span>LEAD</span>
+                  </div>
+                )}
+                <div className="team-avatar-wrap">
+                  {member.photoUrl ? (
                     <img
                       src={member.photoUrl}
                       alt={`Profile photo of ${member.name}`}
+                      className="team-avatar-img"
                       loading="lazy"
                     />
-                  </div>
-                ) : (
-                  <div className="profile-avatar">
-                    <Icon name="users" size={33} />
-                  </div>
-                )}
-                <h3>{member.name}</h3>
-                <p className="profile-designation">{member.designation}</p>
+                  ) : (
+                    <div className="team-avatar-placeholder">
+                      <Icon name="users" size={42} />
+                    </div>
+                  )}
+                </div>
+                <h3 className="team-member-name">{member.name}</h3>
+                <p className="team-member-role">{member.designation}</p>
                 {(member.linkedinUrl || member.instagramUrl || member.githubUrl) && (
-                  <div className="profile-socials">
+                  <div className="team-socials">
                     {member.linkedinUrl && (
                       <a
                         href={member.linkedinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`${member.name} on LinkedIn`}
-                        className="social-icon-link"
+                        className="team-social-btn"
                       >
                         <Icon name="linkedin" size={17} />
                       </a>
@@ -1076,7 +1107,7 @@ export function Hack2027App({
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`${member.name} on Instagram`}
-                        className="social-icon-link"
+                        className="team-social-btn"
                       >
                         <Icon name="instagram" size={17} />
                       </a>
@@ -1087,48 +1118,109 @@ export function Hack2027App({
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`${member.name} on GitHub`}
-                        className="social-icon-link"
+                        className="team-social-btn"
                       >
                         <Icon name="github" size={17} />
                       </a>
                     )}
                   </div>
                 )}
-                <i />
               </article>
             ))}
           </div>
-          {displayCommittee.faculty.length > 0 ? (
-            displayCommittee.faculty.map((fac) => (
-              <div className="faculty-block reveal" key={fac.id}>
-                <div className={`faculty-avatar ${fac.photoUrl ? 'has-photo' : ''}`}>
-                  {fac.photoUrl ? (
-                    <img
-                      src={fac.photoUrl}
-                      alt={`Profile photo of ${fac.name}`}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Icon name="users" size={38} />
-                  )}
+
+          {/* 3. SUPPORTING CREW (Clean 4-column desktop grid) */}
+          {displayCommittee.crew.length > 0 && (
+            <div className="crew-section-wrap reveal">
+              <div className="crew-header-container">
+                <h3 className="crew-main-heading">SUPPORTING CREW</h3>
+                <div className="crew-heading-accent" />
+              </div>
+              <div className="crew-grid">
+                {displayCommittee.crew.map((member) => (
+                  <article className="team-card crew-card" key={member.id}>
+                    <div className="team-avatar-wrap crew-avatar-wrap">
+                      {member.photoUrl ? (
+                        <img
+                          src={member.photoUrl}
+                          alt={`Profile photo of ${member.name}`}
+                          className="team-avatar-img"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="team-avatar-placeholder crew-placeholder">
+                          <Icon name="users" size={32} />
+                        </div>
+                      )}
+                    </div>
+                    <h4 className="team-member-name crew-member-name">{member.name}</h4>
+                    <p className="team-member-role crew-member-role">{member.designation}</p>
+                    {(member.linkedinUrl || member.instagramUrl || member.githubUrl) && (
+                      <div className="team-socials crew-socials">
+                        {member.linkedinUrl && (
+                          <a
+                            href={member.linkedinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`${member.name} on LinkedIn`}
+                            className="team-social-btn"
+                          >
+                            <Icon name="linkedin" size={15} />
+                          </a>
+                        )}
+                        {member.instagramUrl && (
+                          <a
+                            href={member.instagramUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`${member.name} on Instagram`}
+                            className="team-social-btn"
+                          >
+                            <Icon name="instagram" size={15} />
+                          </a>
+                        )}
+                        {member.githubUrl && (
+                          <a
+                            href={member.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`${member.name} on GitHub`}
+                            className="team-social-btn"
+                          >
+                            <Icon name="github" size={15} />
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 4. FACULTY ADVISOR */}
+          {displayCommittee.faculty.length > 0 && (
+            <div className="faculty-section-wrap reveal">
+              {displayCommittee.faculty.map((fac) => (
+                <div className="faculty-block" key={fac.id}>
+                  <div className={`faculty-avatar ${fac.photoUrl ? 'has-photo' : ''}`}>
+                    {fac.photoUrl ? (
+                      <img
+                        src={fac.photoUrl}
+                        alt={`Profile photo of ${fac.name}`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Icon name="users" size={38} />
+                    )}
+                  </div>
+                  <div>
+                    <span>FACULTY IN-CHARGE</span>
+                    <h3>{fac.name}</h3>
+                  </div>
+                  <div className="faculty-mark">FIC</div>
                 </div>
-                <div>
-                  <span>FACULTY IN-CHARGE</span>
-                  <h3>{fac.name}</h3>
-                </div>
-                <div className="faculty-mark">FIC</div>
-              </div>
-            ))
-          ) : (
-            <div className="faculty-block reveal">
-              <div className="faculty-avatar">
-                <Icon name="users" size={38} />
-              </div>
-              <div>
-                <span>FACULTY IN-CHARGE</span>
-                <h3>DR. JOTHI ARUNACHALAM</h3>
-              </div>
-              <div className="faculty-mark">FIC</div>
+              ))}
             </div>
           )}
         </section>
