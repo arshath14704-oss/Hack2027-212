@@ -1,5 +1,6 @@
 import path from 'path'
-import { buildFigmaConfig } from '@payloadcms/figma'
+import { buildConfig } from 'payload'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import { en as adminLanguage } from '@payloadcms/translations/languages/en'
 import { fileURLToPath } from 'url'
@@ -13,7 +14,13 @@ import { CommitteeMembers } from './collections/CommitteeMembers'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-export default buildFigmaConfig({
+export default buildConfig({
+  secret: process.env.PAYLOAD_SECRET || process.env.ADMIN_SESSION_SECRET || '',
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URL || '',
+    },
+  }),
   admin: {
     user: Admins.slug,
     constrainWidth: true,
@@ -42,5 +49,4 @@ export default buildFigmaConfig({
     defaultLocale: 'en',
   },
   plugins: [mcpPlugin({})],
-  figma: {},
 })

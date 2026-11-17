@@ -9,8 +9,14 @@ type CollectionSlug = keyof Config['collections']
  * Use this in server components and route handlers.
  */
 export async function getPayloadClient() {
-  const payloadConfig = await config
-  return getPayload({ config: payloadConfig })
+  try {
+    const payloadConfig = await config
+    return await getPayload({ config: payloadConfig })
+  } catch {
+    // DB unavailable (no DATABASE_URL, connection refused, etc.) — return null
+    // so callers can fall back to local JSON without crashing the page.
+    return null
+  }
 }
 
 /**

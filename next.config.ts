@@ -60,19 +60,7 @@ const nextConfig: NextConfig = {
     },
   },
   env: {
-    NEXT_PUBLIC_SITE_URL: process.env.FIGMA_PUBLIC_URL || 'http://localhost:3000',
-    // NOTE: Do not add FIGMA_OAUTH_CLIENT_SECRET, FIGMA_CONTENT_API_ACCESS_KEY,
-    // or any other credential here. Values placed in `env` are inlined into
-    // the JavaScript bundle by Next.js at build time and become readable by
-    // anyone who can load the app's client assets. Server-side code
-    // (payload.config.ts, route handlers, server components) can still read
-    // these values from `process.env.*` without declaring them here. Only
-    // public, non-secret values that explicitly need to be available in
-    // browser code should be added - and those should use the `NEXT_PUBLIC_*`
-    // naming convention.
-    FIGMA_CONTENT_API_CONTENT_SYSTEM_ID: process.env.FIGMA_CONTENT_API_CONTENT_SYSTEM_ID,
-    FIGMA_CONTENT_API_URL: process.env.FIGMA_CONTENT_API_URL,
-    FIGMA_OAUTH_CLIENT_ID: process.env.FIGMA_OAUTH_CLIENT_ID,
+    NEXT_PUBLIC_SITE_URL: process.env.FIGMA_PUBLIC_URL || process.env.RAILWAY_STATIC_URL || 'http://localhost:3000',
   },
 }
 

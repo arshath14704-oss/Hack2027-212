@@ -46,15 +46,16 @@ export async function writeLocalCommittee(members: CommitteeMember[]): Promise<b
 export async function getAllCommitteeMembers(): Promise<CommitteeMember[]> {
   // 1. Attempt to fetch from Payload if available
   try {
-    const payload = (await getPayloadClient()) as any
-    const result = await payload.find({
+    const payload = await getPayloadClient()
+    if (!payload) throw new Error('Payload client unavailable')
+    const result = await (payload as any).find({
       collection: 'committee-members',
       sort: 'sortOrder',
       depth: 1,
       limit: 100,
     })
 
-    if (result.docs && result.docs.length > 0) {
+    if (result?.docs && Array.isArray(result.docs) && result.docs.length > 0) {
       return result.docs.map((doc: any) => ({
         id: String(doc.id),
         name: doc.name,
