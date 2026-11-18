@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import hackLogo from '../assets/hack-2027-logo.png'
@@ -8,12 +8,15 @@ import { ScrollProgress } from './ScrollProgress'
 import { CustomCursor } from './CustomCursor'
 import { BinaryBackground } from './BinaryBackground'
 import { CautionTape } from './CautionTape'
+import { PlatformPartner } from './PlatformPartner'
+import { CommitteeEditModal } from './CommitteeEditModal'
+import { REGISTRATION } from '@/lib/registration-config'
 
 // Edit official event details and links here as they are confirmed.
 const eventConfig = {
-  eventDate: null as string | null,
+  eventDate: '2027-02-20T00:00:00+05:30',
   registrationStatus: 'Coming Soon' as 'Coming Soon' | 'Open' | 'Closed',
-  registrationUrl: '',
+  registrationUrl: REGISTRATION.url,
   email: 'Simatshack2027@gmail.com',
   instagramUrl: 'https://www.instagram.com/hack2027_simats?mdxt=MWZ5cHF2cXBkcWx2cg==',
   whatsappUrl: 'https://chat.whatsapp.com/FhHEM1K3y5125qcIR1ulEa',
@@ -156,6 +159,14 @@ const committee = [
     instagramUrl: null,
     githubUrl: null,
   },
+  {
+    name: '',
+    designation: '',
+    photo: null,
+    linkedinUrl: null,
+    instagramUrl: null,
+    githubUrl: null,
+  },
 ]
 
 const techSkills = [
@@ -173,15 +184,49 @@ const techSkills = [
 ]
 
 const timeline = [
-  'Registration Opens',
-  'Registration Closes',
-  'Participant Check-in',
-  'Opening Ceremony',
-  'Problem Statement Release',
-  'Hackathon Begins',
-  'Project Submission',
-  'Final Evaluation',
-  'Winners Announcement',
+  {
+    title: 'Registration Opens',
+    date: 'December 1, 2026',
+    description: 'Online registration begins through Devfolio.',
+  },
+  {
+    title: 'Problem Statement Release',
+    date: 'January 1, 2027',
+    description: 'Official problem statements are released.',
+  },
+  {
+    title: 'Round 1: Online PPT Submission',
+    date: 'January 1–20, 2027',
+    description:
+      'Participants submit their idea presentation online through Devfolio. This is an ONLINE ROUND. No physical attendance is required for Round 1.',
+    badge: 'ONLINE ROUND',
+  },
+  {
+    title: 'Shortlisted Teams Announcement',
+    date: 'January 25, 2027',
+    description:
+      'Shortlisted teams are announced. Only selected teams qualify for the offline hackathon.',
+  },
+  {
+    title: 'Opening Ceremony',
+    date: 'February 20, 2027',
+    description: 'Official inauguration for shortlisted participants.',
+  },
+  {
+    title: 'Offline Hackathon Begins',
+    date: 'February 20, 2027',
+    description: 'The 24-hour offline hackathon begins at SIMATS Engineering.',
+  },
+  {
+    title: 'Hackathon Ends',
+    date: 'February 21, 2027',
+    description: 'Final project submissions by participating teams.',
+  },
+  {
+    title: 'Final Evaluation & Winner Announcement',
+    date: 'February 21, 2027',
+    description: 'Final evaluation and winner announcement.',
+  },
 ]
 
 const rules = [
@@ -513,6 +558,24 @@ export function Hack2027App({
   const [showTop, setShowTop] = useState(false)
   const [liveMembers, setLiveMembers] = useState<CommitteeMemberData[]>(cmsMembers || [])
 
+  // Owner authentication & direct editing state
+  const [isOwnerAuthenticated, setIsOwnerAuthenticated] = useState(false)
+  const [editingMember, setEditingMember] = useState<Partial<CommitteeMemberData> | null>(null)
+  const [isNewMemberModal, setIsNewMemberModal] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  // Check owner session on mount
+  useEffect(() => {
+    fetch('/api/committee/auth/check')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.authenticated) {
+          setIsOwnerAuthenticated(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     if (cmsMembers && cmsMembers.length > 0) {
       setLiveMembers(cmsMembers)
@@ -525,6 +588,24 @@ export function Hack2027App({
     minutes: '--',
     seconds: '--',
   })
+
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(
+    () => new Date() >= REGISTRATION.openDate,
+  )
+
+  useEffect(() => {
+    if (isRegistrationOpen) return
+    const checkOpen = () => {
+      if (new Date() >= REGISTRATION.openDate) {
+        setIsRegistrationOpen(true)
+      }
+    }
+    const timer = window.setInterval(checkOpen, 1000)
+    return () => clearInterval(timer)
+  }, [isRegistrationOpen])
+
+  const registrationLabel = isRegistrationOpen ? 'REGISTER NOW' : 'REGISTRATION OPENS DECEMBER 1'
+  const registrationStatus = isRegistrationOpen ? 'REGISTRATION OPEN' : 'COMING SOON'
 
   useEffect(() => {
     const loadTimer = window.setTimeout(() => setLoaded(true), 900)
@@ -646,16 +727,18 @@ export function Hack2027App({
             </a>
           ))}
           <a
-            href="#registration"
+            href={REGISTRATION.url}
+            target="_blank"
+            rel="noopener noreferrer"
             className="mobile-menu-register"
             onClick={() => setMenuOpen(false)}
           >
-            Register Now <span className="cta-arrow">↗</span>
+            REGISTER NOW <span className="cta-arrow">↗</span>
           </a>
         </nav>
         <div className="nav-cta-wrap">
-          <a href="#registration" className="button button-nav">
-            Register Now <span className="cta-arrow">↗</span>
+          <a href={REGISTRATION.url} target="_blank" rel="noopener noreferrer" className="button button-nav">
+            REGISTER NOW <span className="cta-arrow">↗</span>
           </a>
         </div>
         <button
@@ -680,7 +763,7 @@ export function Hack2027App({
             <div className="hero-kicker">
               <span>24-HOUR HACKATHON</span>
               <span className="pulse">
-                <i /> COMING SOON
+                <i /> {registrationStatus}
               </span>
             </div>
             <div className="hero-brand">
@@ -706,9 +789,14 @@ export function Hack2027App({
               ))}
             </div>
             {!eventConfig.eventDate && <div className="date-note">EVENT DATE TO BE ANNOUNCED</div>}
+            {eventConfig.eventDate && (
+              <div className="date-note">
+                FEBRUARY 20–21, 2027 &nbsp;·&nbsp; <span style={{ color: '#facc15' }}>TENTATIVE DATE</span>
+              </div>
+            )}
             <div className="hero-actions">
-              <a className="button" href="#registration">
-                Register Now <Icon name="arrow" size={18} />
+              <a className="button" href={REGISTRATION.url} target="_blank" rel="noopener noreferrer">
+                {registrationLabel} <Icon name="arrow" size={18} />
               </a>
               <a className="button button-ghost" href="#about">
                 Explore Event <span>↓</span>
@@ -831,18 +919,64 @@ export function Hack2027App({
           <SectionHeader
             eyebrow="Road to HACK 2027"
             title="24 HOURS. ONE JOURNEY."
-            copy="Every milestone will be updated with official dates and times as soon as they are confirmed."
+            copy="TENTATIVE SCHEDULE — Dates may change. Follow our socials for updates."
           />
+          <div
+            className="timeline-notice reveal"
+            style={{
+              maxWidth: 900,
+              margin: '0 auto 36px',
+              padding: '16px 22px',
+              border: '1.5px solid #FFD600',
+              borderRadius: 8,
+              background: 'rgba(255, 214, 0, 0.08)',
+              color: '#FFFFFF',
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: '0.92rem',
+              lineHeight: 1.6,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 14,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '3px 9px',
+                background: '#FFD600',
+                color: '#050505',
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                borderRadius: 4,
+                whiteSpace: 'nowrap',
+                marginTop: 2,
+              }}
+            >
+              IMPORTANT
+            </span>
+            <span>
+              <strong>Round 1 is conducted entirely online through Devfolio.</strong> Only
+              shortlisted teams announced on <strong>January 25, 2027</strong>, will be eligible to
+              participate in the offline hackathon on <strong>February 20–21, 2027</strong>.
+            </span>
+          </div>
           <div className="timeline">
             {timeline.map((item, index) => (
-              <div className="timeline-item reveal" key={item}>
+              <div className="timeline-item reveal" key={item.title}>
                 <div className="timeline-marker">
                   <span>{String(index + 1).padStart(2, '0')}</span>
                 </div>
                 <div className="timeline-card">
-                  <span>DATE & TIME — TBA</span>
-                  <h3>{item}</h3>
-                  <p>Official schedule details will be announced.</p>
+                  <span>{item.date}</span>
+                  {item.badge && (
+                    <span style={{ display: 'inline-block', marginLeft: 8, padding: '2px 8px', background: '#facc15', color: '#000', fontSize: '0.7rem', fontWeight: 700, borderRadius: 4, letterSpacing: '0.05em' }}>
+                      {item.badge}
+                    </span>
+                  )}
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
                 </div>
               </div>
             ))}
@@ -898,8 +1032,8 @@ export function Hack2027App({
               </div>
             ))}
           </div>
-          <a href="#registration" className="button journey-cta">
-            Register Your Team <Icon name="arrow" size={18} />
+          <a href={REGISTRATION.url} target="_blank" rel="noopener noreferrer" className="button journey-cta">
+            {registrationLabel} <Icon name="arrow" size={18} />
           </a>
         </section>
 
@@ -912,7 +1046,7 @@ export function Hack2027App({
               </span>
               <div className="status">
                 <i />
-                {eventConfig.registrationStatus}
+                {registrationStatus}
               </div>
               <h2>
                 READY TO BUILD
@@ -920,18 +1054,19 @@ export function Hack2027App({
                 THE <em>FUTURE?</em>
               </h2>
               <p>
-                Registration instructions and the official application link will appear here once
-                released by the HACK 2027 organizing team.
+                {isRegistrationOpen
+                  ? 'Register your team now on Devfolio to participate in HACK 2027.'
+                  : 'Registration opens December 1, 2026. Get your team ready!'}
               </p>
-              <ActionLink href={eventConfig.registrationUrl} className="button">
-                Registration Coming Soon <Icon name="arrow" size={18} />
-              </ActionLink>
+              <a href={REGISTRATION.url} target="_blank" rel="noopener noreferrer" className="button">
+                {registrationLabel} <Icon name="arrow" size={18} />
+              </a>
             </div>
             <div className="registration-info">
               {[
-                ['ELIGIBILITY', 'Official eligibility details — TBA'],
-                ['TEAM INFORMATION', 'Official team size and formation rules — TBA'],
-                ['REGISTRATION', 'External registration portal — Coming Soon'],
+                ['ELIGIBILITY', 'Open to all undergraduate and postgraduate students'],
+                ['TEAM SIZE', '2 to 4 members per team'],
+                ['REGISTRATION', isRegistrationOpen ? 'Register on Devfolio' : 'Opens December 1, 2026'],
               ].map(([title, copy]) => (
                 <div key={title}>
                   <Icon name="check" />
@@ -978,6 +1113,8 @@ export function Hack2027App({
             ))}
           </div>
         </section>
+
+        <PlatformPartner />
 
         <section className="section sponsors">
           <SectionHeader
@@ -1037,77 +1174,347 @@ export function Hack2027App({
         </section>
 
         <section id="team" className="section team-section">
-          <div className="team-header-row reveal">
+          <div className="team-header-row reveal" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
             <SectionHeader
               eyebrow="People behind the event"
               title="MEET THE ORGANIZING COMMITTEE"
               copy="The team behind HACK 2027."
             />
+            {isOwnerAuthenticated && (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
+                <span
+                  style={{
+                    padding: '4px 10px',
+                    background: 'rgba(255, 214, 0, 0.12)',
+                    border: '1px solid #FFD600',
+                    color: '#FFD600',
+                    borderRadius: 4,
+                    fontSize: '11px',
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  ⚡ DIRECT EDIT ACTIVE
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingMember(null)
+                    setIsNewMemberModal(true)
+                    setIsEditModalOpen(true)
+                  }}
+                  style={{
+                    padding: '9px 18px',
+                    background: '#FFD600',
+                    color: '#050505',
+                    border: 'none',
+                    borderRadius: 4,
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    letterSpacing: '0.06em',
+                    boxShadow: '0 2px 10px rgba(255, 214, 0, 0.4)',
+                  }}
+                >
+                  + ADD MEMBER
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await fetch('/api/committee/auth/logout', { method: 'POST' })
+                    setIsOwnerAuthenticated(false)
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    background: 'transparent',
+                    color: '#ef4444',
+                    border: '1px solid #ef4444',
+                    borderRadius: 4,
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    letterSpacing: '0.05em',
+                  }}
+                  title="Logout from owner edit session"
+                >
+                  LOGOUT
+                </button>
+              </div>
+            )}
           </div>
           <div className="committee-grid">
-            {displayCommittee.regular.map((member, index) => (
-              <article className="profile-card reveal" key={member.id}>
-                <span className="profile-index">{String(index + 1).padStart(2, '0')}</span>
-                {member.photoUrl ? (
-                  <div className="profile-avatar has-photo">
-                    <img
-                      src={member.photoUrl}
-                      alt={`Profile photo of ${member.name}`}
-                      loading="lazy"
-                    />
-                  </div>
-                ) : (
-                  <div className="profile-avatar">
-                    <Icon name="users" size={33} />
-                  </div>
-                )}
-                <h3>{member.name}</h3>
-                <p className="profile-designation">{member.designation}</p>
-                {(member.linkedinUrl || member.instagramUrl || member.githubUrl) && (
-                  <div className="profile-socials">
-                    {member.linkedinUrl && (
-                      <a
-                        href={member.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${member.name} on LinkedIn`}
-                        className="social-icon-link"
-                      >
-                        <Icon name="linkedin" size={17} />
-                      </a>
+            {displayCommittee.regular.map((member, index) => {
+              const isEmptyMember = !member.name && !member.designation
+              return (
+                <article
+                  className={`profile-card reveal ${isEmptyMember ? 'empty-member-card' : ''}`}
+                  key={member.id}
+                  style={
+                    isEmptyMember
+                      ? {
+                          border: '1.5px dashed rgba(255, 214, 0, 0.45)',
+                          background: 'rgba(255, 214, 0, 0.02)',
+                        }
+                      : undefined
+                  }
+                >
+                  <span className="profile-index">{String(index + 1).padStart(2, '0')}</span>
+
+                  {/* Owner-only Edit Icon badge in top-right corner of card */}
+                  {isOwnerAuthenticated && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMember(member)
+                        setIsNewMemberModal(false)
+                        setIsEditModalOpen(true)
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: 14,
+                        right: 14,
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        background: '#FFD600',
+                        color: '#050505',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontSize: '13px',
+                        fontWeight: 900,
+                        boxShadow: '0 2px 8px rgba(255, 214, 0, 0.4)',
+                        zIndex: 3,
+                        transition: 'transform 0.2s ease',
+                      }}
+                      title="Edit this committee member"
+                    >
+                      ✎
+                    </button>
+                  )}
+
+                  {/* Photo area: clickable to edit when owner */}
+                  <div
+                    className={`profile-avatar ${member.photoUrl ? 'has-photo' : ''}`}
+                    onClick={() => {
+                      if (isOwnerAuthenticated) {
+                        setEditingMember(member)
+                        setIsNewMemberModal(false)
+                        setIsEditModalOpen(true)
+                      }
+                    }}
+                    style={{
+                      cursor: isOwnerAuthenticated ? 'pointer' : 'default',
+                      position: 'relative',
+                    }}
+                    title={isOwnerAuthenticated ? 'Click to replace or upload photo' : undefined}
+                  >
+                    {member.photoUrl ? (
+                      <img
+                        src={member.photoUrl}
+                        alt={`Profile photo of ${member.name || 'Committee Member'}`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Icon name="users" size={33} />
                     )}
-                    {member.instagramUrl && (
-                      <a
-                        href={member.instagramUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${member.name} on Instagram`}
-                        className="social-icon-link"
+                    {isOwnerAuthenticated && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          bottom: -4,
+                          padding: '2px 8px',
+                          background: '#FFD600',
+                          color: '#050505',
+                          fontSize: '8px',
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontWeight: 800,
+                          borderRadius: 3,
+                          letterSpacing: '0.05em',
+                        }}
                       >
-                        <Icon name="instagram" size={17} />
-                      </a>
-                    )}
-                    {member.githubUrl && (
-                      <a
-                        href={member.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${member.name} on GitHub`}
-                        className="social-icon-link"
-                      >
-                        <Icon name="github" size={17} />
-                      </a>
+                        PHOTO ✎
+                      </span>
                     )}
                   </div>
-                )}
-                <i />
-              </article>
-            ))}
+
+                  {/* Name: clickable to edit */}
+                  <h3
+                    onClick={() => {
+                      if (isOwnerAuthenticated) {
+                        setEditingMember(member)
+                        setIsNewMemberModal(false)
+                        setIsEditModalOpen(true)
+                      }
+                    }}
+                    style={{
+                      cursor: isOwnerAuthenticated ? 'pointer' : 'default',
+                      color: isEmptyMember ? 'rgba(255, 214, 0, 0.65)' : undefined,
+                      fontStyle: isEmptyMember ? 'italic' : undefined,
+                    }}
+                    title={isOwnerAuthenticated ? 'Click to edit name' : undefined}
+                  >
+                    {member.name || (isEmptyMember ? '[ENTER MEMBER NAME]' : 'UNNAMED MEMBER')}
+                    {isOwnerAuthenticated && (
+                      <span style={{ fontSize: '11px', marginLeft: 6, color: '#FFD600' }}>✎</span>
+                    )}
+                  </h3>
+
+                  {/* Designation: clickable to edit */}
+                  <p
+                    className="profile-designation"
+                    onClick={() => {
+                      if (isOwnerAuthenticated) {
+                        setEditingMember(member)
+                        setIsNewMemberModal(false)
+                        setIsEditModalOpen(true)
+                      }
+                    }}
+                    style={{
+                      cursor: isOwnerAuthenticated ? 'pointer' : 'default',
+                      color: isEmptyMember ? '#888' : undefined,
+                      fontStyle: isEmptyMember ? 'italic' : undefined,
+                    }}
+                    title={isOwnerAuthenticated ? 'Click to edit designation' : undefined}
+                  >
+                    {member.designation || (isEmptyMember ? '[Enter designation / role]' : '—')}
+                    {isOwnerAuthenticated && (
+                      <span style={{ fontSize: '10px', marginLeft: 6, color: '#888' }}>✎</span>
+                    )}
+                  </p>
+
+                  {(member.linkedinUrl || member.instagramUrl || member.githubUrl) && (
+                    <div className="profile-socials">
+                      {member.linkedinUrl && (
+                        <a
+                          href={member.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${member.name} on LinkedIn`}
+                          className="social-icon-link"
+                        >
+                          <Icon name="linkedin" size={17} />
+                        </a>
+                      )}
+                      {member.instagramUrl && (
+                        <a
+                          href={member.instagramUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${member.name} on Instagram`}
+                          className="social-icon-link"
+                        >
+                          <Icon name="instagram" size={17} />
+                        </a>
+                      )}
+                      {member.githubUrl && (
+                        <a
+                          href={member.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${member.name} on GitHub`}
+                          className="social-icon-link"
+                        >
+                          <Icon name="github" size={17} />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Direct Edit / Delete Controls for Owner */}
+                  {isOwnerAuthenticated && (
+                    <div style={{ display: 'flex', gap: 6, marginTop: 14, width: '100%', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingMember(member)
+                          setIsNewMemberModal(false)
+                          setIsEditModalOpen(true)
+                        }}
+                        style={{
+                          width: '100%',
+                          maxWidth: 160,
+                          padding: '8px 14px',
+                          background: '#FFD600',
+                          border: 'none',
+                          color: '#050505',
+                          borderRadius: 4,
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 10px rgba(255, 214, 0, 0.4)',
+                        }}
+                      >
+                        ✎ EDIT MEMBER
+                      </button>
+                    </div>
+                  )}
+
+                  <i />
+                </article>
+              )
+            })}
           </div>
           {displayCommittee.faculty.length > 0 ? (
             displayCommittee.faculty.map((fac) => (
-              <div className="faculty-block reveal" key={fac.id}>
-                <div className={`faculty-avatar ${fac.photoUrl ? 'has-photo' : ''}`}>
+              <div
+                className="faculty-block reveal"
+                key={fac.id}
+                style={{ position: 'relative' }}
+              >
+                {/* Owner-only Edit button for faculty */}
+                {isOwnerAuthenticated && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingMember(fac)
+                      setIsNewMemberModal(false)
+                      setIsEditModalOpen(true)
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: 14,
+                      right: 14,
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      background: '#FFD600',
+                      color: '#050505',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'grid',
+                      placeItems: 'center',
+                      fontSize: '13px',
+                      fontWeight: 900,
+                      boxShadow: '0 2px 8px rgba(255, 214, 0, 0.4)',
+                      zIndex: 3,
+                    }}
+                    title="Edit Faculty In-Charge"
+                  >
+                    ✎
+                  </button>
+                )}
+                <div
+                  className={`faculty-avatar ${fac.photoUrl ? 'has-photo' : ''}`}
+                  onClick={() => {
+                    if (isOwnerAuthenticated) {
+                      setEditingMember(fac)
+                      setIsNewMemberModal(false)
+                      setIsEditModalOpen(true)
+                    }
+                  }}
+                  style={{
+                    cursor: isOwnerAuthenticated ? 'pointer' : 'default',
+                    position: 'relative',
+                  }}
+                  title={isOwnerAuthenticated ? 'Click to replace faculty photo' : undefined}
+                >
                   {fac.photoUrl ? (
                     <img
                       src={fac.photoUrl}
@@ -1117,10 +1524,42 @@ export function Hack2027App({
                   ) : (
                     <Icon name="users" size={38} />
                   )}
+                  {isOwnerAuthenticated && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: -4,
+                        padding: '2px 8px',
+                        background: '#FFD600',
+                        color: '#050505',
+                        fontSize: '8px',
+                        fontFamily: "'Orbitron', sans-serif",
+                        fontWeight: 800,
+                        borderRadius: 3,
+                      }}
+                    >
+                      PHOTO ✎
+                    </span>
+                  )}
                 </div>
                 <div>
                   <span>FACULTY IN-CHARGE</span>
-                  <h3>{fac.name}</h3>
+                  <h3
+                    onClick={() => {
+                      if (isOwnerAuthenticated) {
+                        setEditingMember(fac)
+                        setIsNewMemberModal(false)
+                        setIsEditModalOpen(true)
+                      }
+                    }}
+                    style={{ cursor: isOwnerAuthenticated ? 'pointer' : 'default' }}
+                    title={isOwnerAuthenticated ? 'Click to edit faculty details' : undefined}
+                  >
+                    {fac.name}
+                    {isOwnerAuthenticated && (
+                      <span style={{ fontSize: '12px', marginLeft: 8, color: '#FFD600' }}>✎</span>
+                    )}
+                  </h3>
                 </div>
                 <div className="faculty-mark">FIC</div>
               </div>
@@ -1267,25 +1706,7 @@ export function Hack2027App({
               <Icon name="linkedin" size={18} />
             </ActionLink>
           </div>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-            BUILT FOR THE BOLD.
-            <a
-              href="/admin/committee/login"
-              style={{
-                color: 'rgba(255, 214, 0, 0.35)',
-                fontSize: '10px',
-                fontFamily: "'Orbitron', sans-serif",
-                textDecoration: 'none',
-                letterSpacing: '0.1em',
-                transition: 'color 0.2s',
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.color = '#FFD600')}
-              onMouseOut={(e) => (e.currentTarget.style.color = 'rgba(255, 214, 0, 0.35)')}
-              title="Organizing Committee Admin Login"
-            >
-              [ADMIN PORTAL]
-            </a>
-          </span>
+          <span>BUILT FOR THE BOLD.</span>
         </div>
       </footer>
 
@@ -1296,6 +1717,33 @@ export function Hack2027App({
       >
         ↑
       </button>
+
+      {/* Direct Committee Edit Modal for Authenticated Owner */}
+      {isOwnerAuthenticated && isEditModalOpen && (
+        <CommitteeEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false)
+            setEditingMember(null)
+          }}
+          member={editingMember}
+          isNew={isNewMemberModal}
+          onSaveSuccess={(saved) => {
+            setLiveMembers((prev) => {
+              const idx = prev.findIndex((m) => m.id === saved.id)
+              if (idx >= 0) {
+                const next = [...prev]
+                next[idx] = saved
+                return next
+              }
+              return [...prev, saved]
+            })
+          }}
+          onDeleteSuccess={(deletedId) => {
+            setLiveMembers((prev) => prev.filter((m) => m.id !== deletedId))
+          }}
+        />
+      )}
     </div>
   )
 }
